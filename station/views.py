@@ -48,4 +48,4 @@ class BusDetail(APIView):
     def delete(self, request, pk):
         bus = self.get_object(pk)
         bus.delete()
-        return status.HTTP_204_NO_CONTENT
+        return Response(status=status.HTTP_204_NO_CONTENT)
