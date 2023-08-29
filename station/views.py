@@ -1,20 +1,21 @@
+from django.http import Http404
 from rest_framework import status
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from station.models import Bus
 from station.serializers import BusSerializer
 
 
-@api_view(["GET", "POST"])
-def bus_list(request):
-    if request.method == "GET":
+class BusList(APIView):
+    def get(self, request):
         buses = Bus.objects.all()
         serializer = BusSerializer(buses, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    if request.method == "POST":
+    def post(self, request):
         serializer = BusSerializer(data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -22,25 +23,29 @@ def bus_list(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(["GET", "PUT", "DELETE"])
-def bus_detail(request, pk):
-    try:
-        bus = Bus.objects.get(pk=pk)
-    except Bus.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+class BusDetail(APIView):
+    def get_object(self, pk):
+        try:
+            return Bus.objects.get(pk=pk)
+        except Bus.DoesNotExist:
+            raise Http404
 
-    if request.method == "GET":
+    def get(self, request, pk):
+        bus = self.get_object(pk)
         serializer = BusSerializer(bus)
         return Response(serializer.data)
 
-    elif request.method == "PUT":
+    def put(self, request, pk):
+        bus = self.get_object(pk)
         serializer = BusSerializer(bus, data=request.data)
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    elif request.method == "DELETE":
+    def delete(self, request, pk):
+        bus = self.get_object(pk)
         bus.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
+        return status.HTTP_204_NO_CONTENT
